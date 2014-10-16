@@ -135,3 +135,10 @@ function test_arr_data()
    local res = ubx.data_tolua(d)
    assert_true(utils.table_cmp(res, init), "test_arr_data double[5] roundtrip failed")
 end
+
+function test_void_pointer_to_prim()
+   local init = 0xdeafbeaf 
+   local vp = ffi.new("void *", ffi.cast('void *', init)) 
+   local val = cdata.tolua(vp)
+   assert_equal(init, val, "L: mismatch after converting from cdata")
+end
