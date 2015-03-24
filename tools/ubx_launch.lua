@@ -11,11 +11,12 @@ function usage()
 microblx function blocks system launcher
 
 usage ubx_launch OPTIONS -c <conf file>
-   -c           configuration file to launch
-   -nodename    name to give to node
-   -validate    dont run, just validate configuration file
-   -webif	create and start a webinterface block
-   -h           show this.
+   -c <conf_file.usc>		Configuration file to launch
+   -nodename			Name to give to node
+   -validate			Dont run, just validate configuration file
+   -webif [port]		Create and start a webinterface block
+   -d <deploy_conf.udc>		Load deploy conf file	
+   -h				Show this.
 ]=])
 end
 
@@ -65,3 +66,34 @@ if opttab['-webif'] then
    assert(ubx.block_init(webif1)==0)
    assert(ubx.block_start(webif1)==0)
 end
+
+-- Load deploy config
+if ( opttab['-d'] ) then
+  if (not opttab['-d'][1] ) then
+    print("Deploy configuration file is not valid")
+    os.exit(1)
+  else
+    dep_file = opttab['-d'][1]
+    local suc, ops = pcall(dofile, dep_file)
+    if ( suc ) then
+      for i, v in ipairs(ops) do 
+        if ( v["op"] == "start" ) then
+          print("Starting "..v["name"])
+          ubx.block_start (ubx.block_get(ni, v["name"] ))
+        elseif ( v["op"] == "init" ) then
+            print("Initialising "..v["name"])
+            ubx.block_init  (ubx.block_get(ni, v["name"] ))
+        elseif ( v["op"] == "cleanup" ) then
+            print("Cleaning up "..v["name"])
+            ubx.block_cleanup  (ubx.block_get(ni, v["name"] ))
+        elseif ( v["op"] == "stop" ) then
+            print("Stopping "..v["name"])
+            ubx.block_stop  (ubx.block_get(ni, v["name"] ))
+        end
+      end
+    else
+      print(dep)
+    end
+  end
+end
+
